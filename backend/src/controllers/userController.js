@@ -95,8 +95,9 @@ const uploadProfilePicture = asyncHandler(async (req, res) => {
         });
     }
 
-    // Save file path (in production, upload to cloud storage like S3)
-    user.profilePicture = `/uploads/${req.file.filename}`;
+    // Convert uploaded buffer to base64 data URL for storage
+    const base64Image = req.file.buffer.toString('base64');
+    user.profilePicture = `data:${req.file.mimetype};base64,${base64Image}`;
     await user.save();
 
     logger.info(`Profile picture uploaded for user: ${user.email}`);

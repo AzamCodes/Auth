@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { User, Lock, Shield, Camera, Loader2, LogOut } from 'lucide-react';
+import { User, Lock, Shield, Camera, Loader2, LogOut, Eye, EyeOff, Crop } from 'lucide-react';
 import { toast } from 'react-toastify';
 import userService from '../services/userService';
 import authService from '../services/authService';
 import { profileUpdateSchema, changePasswordSchema } from '../utils/validationSchemas';
 import useAuth from '../hooks/useAuth';
+import { setAuth } from '../redux/authSlice';
+import Cropper from 'react-easy-crop';
 
 import { Button } from "@/components/ui/button"
 import {
@@ -31,11 +34,22 @@ import {
 } from "@/components/ui/input-otp"
 
 const ProfilePage = () => {
+    const dispatch = useDispatch();
     const { user, logoutUser } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [qrCode, setQrCode] = useState('');
     const [show2FADialog, setShow2FADialog] = useState(false);
     const [twoFactorToken, setTwoFactorToken] = useState('');
+    const [avatarSrc, setAvatarSrc] = useState(user?.profilePicture || '');
+    const [showOldPassword, setShowOldPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showCropper, setShowCropper] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
     // Profile Form
     const {
@@ -61,6 +75,7 @@ const ProfilePage = () => {
         if (user) {
             setValueProfile('name', user.name);
             setValueProfile('email', user.email);
+            setAvatarSrc(user.profilePicture || '');
         }
     }, [user, setValueProfile]);
 
@@ -89,20 +104,112 @@ const ProfilePage = () => {
         }
     };
 
-    const handleImageUpload = async (e) => {
+    const onCropComplete = useCallback((_, croppedPixels) => {
+        setCroppedAreaPixels(croppedPixels);
+    }, []);
+
+    const resetCropState = () => {
+        if (selectedImage) {
+            URL.revokeObjectURL(selectedImage);
+        }
+        setSelectedImage(null);
+        setShowCropper(false);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setCroppedAreaPixels(null);
+        setIsUploadingAvatar(false);
+    };
+
+    const validateFile = (file) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Only JPG, PNG, or GIF images are allowed.');
+            return false;
+        }
+
+        if (file.size > maxSize) {
+            toast.error('Image is too large. Max size is 5MB.');
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleImageUpload = (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const formData = new FormData();
-        formData.append('picture', file);
+        if (!validateFile(file)) {
+            return;
+        }
 
+        const previewUrl = URL.createObjectURL(file);
+        setSelectedImage(previewUrl);
+        setShowCropper(true);
+    };
+
+    const getCroppedImage = useCallback(
+        async () => {
+            if (!selectedImage || !croppedAreaPixels) return null;
+
+            const image = new Image();
+            image.src = selectedImage;
+            await new Promise((resolve, reject) => {
+                image.onload = resolve;
+                image.onerror = reject;
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = croppedAreaPixels.width;
+            canvas.height = croppedAreaPixels.height;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(
+                image,
+                croppedAreaPixels.x,
+                croppedAreaPixels.y,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height,
+                0,
+                0,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height
+            );
+
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(
+                    (blob) => {
+                        if (!blob) return reject(new Error('Canvas is empty'));
+                        resolve(blob);
+                    },
+                    'image/jpeg',
+                    0.9
+                );
+            });
+        },
+        [croppedAreaPixels, selectedImage]
+    );
+
+    const handleCropSave = async () => {
         try {
-            await userService.uploadProfilePicture(file);
+            setIsUploadingAvatar(true);
+            const blob = await getCroppedImage();
+            if (!blob) {
+                toast.error('Unable to crop image. Please try again.');
+                return;
+            }
+            const file = new File([blob], 'profile.jpg', { type: blob.type || 'image/jpeg' });
+            const response = await userService.uploadProfilePicture(file);
+            const updatedUser = { ...(user || {}), profilePicture: response.profilePicture };
+            dispatch(setAuth({ user: updatedUser }));
+            setAvatarSrc(response.profilePicture);
             toast.success('Profile picture updated');
-            // Ideally force a refresh of user state here
-            window.location.reload();
+            resetCropState();
         } catch (err) {
             toast.error('Failed to upload image');
+            setIsUploadingAvatar(false);
         }
     };
 
@@ -172,7 +279,7 @@ const ProfilePage = () => {
                             <div className="flex flex-col items-center space-y-4">
                                 <div className="relative group cursor-pointer">
                                     <Avatar className="h-24 w-24">
-                                        <AvatarImage src={user?.profilePicture} />
+                                        <AvatarImage src={avatarSrc} />
                                         <AvatarFallback className="text-xl">{user?.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -185,7 +292,7 @@ const ProfilePage = () => {
                                         />
                                     </div>
                                 </div>
-                                <p className="text-sm text-muted-foreground">Click to upload new picture</p>
+                                <p className="text-sm text-muted-foreground">Click to upload new picture (JPG/PNG/GIF, max 5MB)</p>
                             </div>
 
                             <form onSubmit={handleSubmitProfile(onUpdateProfile)} className="space-y-4">
@@ -221,17 +328,59 @@ const ProfilePage = () => {
                                 <form onSubmit={handleSubmitPassword(onChangePassword)} className="space-y-4">
                                     <div className="grid gap-2">
                                         <Label htmlFor="oldPassword">Current Password</Label>
-                                        <Input id="oldPassword" type="password" {...registerPassword('oldPassword')} />
+                                        <div className="relative">
+                                            <Input
+                                                id="oldPassword"
+                                                type={showOldPassword ? 'text' : 'password'}
+                                                className="pr-10"
+                                                {...registerPassword('oldPassword')}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowOldPassword((prev) => !prev)}
+                                                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                            >
+                                                {showOldPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </button>
+                                        </div>
                                         {errorsPassword.oldPassword && <p className="text-sm text-destructive">{errorsPassword.oldPassword.message}</p>}
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="newPassword">New Password</Label>
-                                        <Input id="newPassword" type="password" {...registerPassword('newPassword')} />
+                                        <div className="relative">
+                                            <Input
+                                                id="newPassword"
+                                                type={showNewPassword ? 'text' : 'password'}
+                                                className="pr-10"
+                                                {...registerPassword('newPassword')}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowNewPassword((prev) => !prev)}
+                                                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                            >
+                                                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </button>
+                                        </div>
                                         {errorsPassword.newPassword && <p className="text-sm text-destructive">{errorsPassword.newPassword.message}</p>}
                                     </div>
                                     <div className="grid gap-2">
                                         <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                        <Input id="confirmPassword" type="password" {...registerPassword('confirmPassword')} />
+                                        <div className="relative">
+                                            <Input
+                                                id="confirmPassword"
+                                                type={showConfirmPassword ? 'text' : 'password'}
+                                                className="pr-10"
+                                                {...registerPassword('confirmPassword')}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                                className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                            >
+                                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                            </button>
+                                        </div>
                                         {errorsPassword.confirmPassword && <p className="text-sm text-destructive">{errorsPassword.confirmPassword.message}</p>}
                                     </div>
                                     <Button type="submit" disabled={isLoading}>
@@ -272,7 +421,7 @@ const ProfilePage = () => {
                         <DialogTitle>Setup Two-Factor Authentication</DialogTitle>
                         <DialogDescription className="text-left space-y-2">
                             <p><strong>Step 1:</strong> Download an Authenticator App like <strong>Google Authenticator</strong> or <strong>Microsoft Authenticator</strong> on your phone.</p>
-                            <p><strong>Step 2:</strong> Open the app and tap "+" or "Add Account".</p>
+                            <p><strong>Step 2:</strong> Open the app and tap &quot;+&quot; or &quot;Add Account&quot;.</p>
                             <p><strong>Step 3:</strong> Scan the QR code below <strong>using that app</strong> (do not use your standard camera or Google Lens).</p>
                             <p><strong>Step 4:</strong> Enter the 6-digit code shown in the app to verify.</p>
                         </DialogDescription>
@@ -299,6 +448,57 @@ const ProfilePage = () => {
                     </div>
                     <DialogFooter>
                         <Button onClick={verify2FASetup} disabled={twoFactorToken.length !== 6}>Verify & Enable</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog
+                open={showCropper}
+                onOpenChange={(open) => {
+                    if (isUploadingAvatar) return;
+                    if (!open) {
+                        resetCropState();
+                    } else {
+                        setShowCropper(true);
+                    }
+                }}
+            >
+                <DialogContent className="sm:max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Edit Profile Image</DialogTitle>
+                        <DialogDescription>Crop your image before uploading. Allowed: JPG/PNG/GIF. Max size: 5MB.</DialogDescription>
+                    </DialogHeader>
+                    <div className="relative h-80 bg-muted rounded-md overflow-hidden">
+                        {selectedImage && (
+                            <Cropper
+                                image={selectedImage}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={1}
+                                onCropChange={setCrop}
+                                onZoomChange={setZoom}
+                                onCropComplete={onCropComplete}
+                            />
+                        )}
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <Label className="text-sm">Zoom</Label>
+                        <input
+                            type="range"
+                            min={1}
+                            max={3}
+                            step={0.1}
+                            value={zoom}
+                            onChange={(e) => setZoom(Number(e.target.value))}
+                            className="w-full"
+                        />
+                    </div>
+                    <DialogFooter className="flex justify-end space-x-2">
+                        <Button variant="outline" onClick={resetCropState} disabled={isUploadingAvatar}>Cancel</Button>
+                        <Button onClick={handleCropSave} disabled={isUploadingAvatar}>
+                            {isUploadingAvatar && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Save & Upload
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

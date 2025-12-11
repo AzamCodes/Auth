@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Lock, KeyRound, Loader2, CheckCircle2 } from 'lucide-react';
+import { Lock, KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
 import { resetPasswordSchema } from '../utils/validationSchemas';
 import { toast } from 'react-toastify';
 import axios from 'axios';
@@ -39,6 +39,8 @@ const ResetPasswordPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [resetToken, setResetToken] = useState('');
     const [error, setError] = useState('');
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Form for Step 1: OTP Verification
     const {
@@ -180,10 +182,17 @@ const ResetPasswordPage = () => {
                                     <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="newPassword"
-                                        type="password"
-                                        className="pl-10"
+                                        type={showNewPassword ? 'text' : 'password'}
+                                        className="pl-10 pr-10"
                                         {...registerPassword('newPassword')}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNewPassword((prev) => !prev)}
+                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
                                 </div>
                                 {errorsPassword.newPassword && (
                                     <p className="text-sm text-destructive">{errorsPassword.newPassword.message}</p>
@@ -195,10 +204,17 @@ const ResetPasswordPage = () => {
                                     <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="confirmPassword"
-                                        type="password"
-                                        className="pl-10"
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        className="pl-10 pr-10"
                                         {...registerPassword('confirmPassword')}
                                     />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                                        className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    </button>
                                 </div>
                                 {errorsPassword.confirmPassword && (
                                     <p className="text-sm text-destructive">{errorsPassword.confirmPassword.message}</p>

@@ -21,6 +21,7 @@ A complete, production-ready authentication system built with MongoDB, Express.j
 - ✅ **Google OAuth 2.0** - One-click sign in with Google
 - ✅ **GitHub OAuth** - One-click sign in with GitHub
 - ✅ **Social Login Ready** - Framework in place for others
+- ✅ **Profile pictures as base64** with validation (JPG/PNG/GIF, 5MB limit)
 
 ### Frontend Features
 - ✅ **Modern React UI** with Material-UI
@@ -39,6 +40,7 @@ A complete, production-ready authentication system built with MongoDB, Express.j
 - ✅ **Loading States** with skeleton loaders
 - ✅ **Error Boundaries** for graceful error handling
 - ✅ **Social Login Buttons** - Google and GitHub
+- ✅ **Avatar upload with cropper** (JPG/PNG/GIF, 5MB max)
 
 ## 📁 Project Structure
 
@@ -235,7 +237,7 @@ SMTP_PASS=your-app-password
 | :--- | :--- | :--- | :--- |
 | `GET` | `/users/profile` | Get user profile | None |
 | `PUT` | `/users/profile` | Update user profile | `{ "name": "Jane Doe", "email": "jane@example.com" }` |
-| `POST` | `/users/profile/picture` | Upload profile picture | Form-Data: `picture` (File) |
+| `POST` | `/users/profile/picture` | Upload profile picture | Form-Data: `picture` (File, JPG/PNG/GIF, ≤5MB) |
 
 ### 6. Admin Endpoints (Requires Admin Login)
 **Header:** `Authorization: Bearer <ADMIN_ACCESS_TOKEN>`
