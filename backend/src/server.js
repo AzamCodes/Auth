@@ -1,7 +1,7 @@
 
 require('dotenv').config();
-console.log('MONGODB_URI:', process.env.MONGODB_URI);  // ← NOW YOU WILL SEE THE REAL URI
-console.log('.env loaded keys:', Object.keys(process.env).filter(k => k.includes('MONGO') || k.includes('JWT')));
+// console.log('MONGODB_URI:', process.env.MONGODB_URI);  // ← NOW YOU WILL SEE THE REAL URI
+// console.log('.env loaded keys:', Object.keys(process.env).filter(k => k.includes('MONGO') || k.includes('JWT')));
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

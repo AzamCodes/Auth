@@ -22,9 +22,9 @@ const notFound = (req, res, next) => {
  * @param {Error} err - Error object
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
- * @param {Function} next - Express next function
+//  *  - Express next function
  */
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res) => {
     const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
 
     // Log error

@@ -3,7 +3,7 @@
  * Input validation rules using express-validator
  */
 
-const { body, param, query } = require('express-validator');
+const { body, param } = require('express-validator');
 
 /**
  * Registration validation

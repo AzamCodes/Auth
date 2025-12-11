@@ -5,7 +5,6 @@
 
 const authService = require('../services/authService');
 const { asyncHandler } = require('../middleware/errorHandler');
-const logger = require('../config/logger');
 
 /**
  * Register a new user

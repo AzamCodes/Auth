@@ -7,8 +7,8 @@ const brevo = require('@getbrevo/brevo');
 const logger = require('./logger');
 
 // Initialize Brevo API client
-let apiInstance = new brevo.TransactionalEmailsApi();
-let apiKey = apiInstance.authentications['apiKey'];
+const apiInstance = new brevo.TransactionalEmailsApi();
+const apiKey = apiInstance.authentications.apiKey;
 apiKey.apiKey = process.env.BREVO_API_KEY;
 
 /**
@@ -21,7 +21,7 @@ const sendEmail = async ({ to, subject, html, text }) => {
 
     logger.info(`Attempting to send email to ${to} from ${fromName} <${fromEmail}>`);
 
-    let sendSmtpEmail = new brevo.SendSmtpEmail();
+    const sendSmtpEmail = new brevo.SendSmtpEmail();
 
     sendSmtpEmail.sender = {
       name: fromName,
