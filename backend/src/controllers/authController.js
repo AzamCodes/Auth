@@ -269,10 +269,6 @@ const logoutAll = asyncHandler(async (req, res) => {
  * @access Public
  */
 const googleCallback = asyncHandler(async (req, res) => {
-    console.log('--- Google Callback Hit ---');
-    console.log('req.user:', req.user);  // Should contain user info from Google
-    console.log('req.query:', req.query); // Check code, state, etc.
-    console.log('req.headers.origin:', req.headers.origin);
     const deviceInfo = {
         browser: req.useragent.browser,
         os: req.useragent.os,
@@ -296,7 +292,6 @@ const googleCallback = asyncHandler(async (req, res) => {
     // Redirect to frontend with tokens
     const frontendURL = process.env.CLIENT_URL || 'http://localhost:3000';
     const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
-    // const redirectURL =`${frontendURL}/auth/callback?token=${result.accessToken}`;
 
     res.redirect(redirectURL);
 });
@@ -329,8 +324,8 @@ const githubCallback = asyncHandler(async (req, res) => {
 
     // Redirect to frontend with tokens
     const frontendURL = process.env.CLIENT_URL || 'http://localhost:3000';
-    // const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
-    const redirectURL =`${frontendURL}/auth/callback?token=${result.accessToken}`;
+    const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
+
     res.redirect(redirectURL);
 });
 

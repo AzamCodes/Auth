@@ -5,6 +5,9 @@
 
 const rateLimit = require('express-rate-limit');
 
+// Helper to skip OPTIONS requests
+const skipOptions = (req) => req.method === 'OPTIONS';
+
 /**
  * General rate limiter
  */
@@ -17,6 +20,7 @@ const generalLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skip: skipOptions, // Do not count OPTIONS requests
 });
 
 /**
@@ -32,6 +36,7 @@ const authLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skip: skipOptions,
 });
 
 /**
@@ -47,6 +52,7 @@ const passwordResetLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skip: skipOptions,
 });
 
 /**
@@ -61,6 +67,7 @@ const emailVerificationLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
+    skip: skipOptions,
 });
 
 module.exports = {

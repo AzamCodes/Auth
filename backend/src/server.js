@@ -26,17 +26,49 @@ const app = express();
 // Connect to database
 connectDB();
 
+console.log('check frontend url', process.env.CLIENT_URL)
+
 // Trust proxy (for production behind reverse proxy)
+// Trust proxy (necessary for Railway/Vercel)
 app.set('trust proxy', 1);
 
 // Security middleware
-app.use(helmet());
 app.use(
-    cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:3000',
-        credentials: true,
+    helmet({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     })
 );
+
+// CORS configuration
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+// Strip trailing slash if present for comparison
+const allowedOrigin = clientUrl.endsWith('/') ? clientUrl.slice(0, -1) : clientUrl;
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            // Check if origin matches allowed origin (ignoring trailing slash)
+            const originClean = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+
+            if (originClean === allowedOrigin) {
+                callback(null, true);
+            } else {
+                // For development, you might want to log this
+                console.log('Blocked by CORS:', origin);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    })
+);
+// Explicitly handle OPTIONS for preflight resilience
+app.options('*', cors());
 app.use(mongoSanitize()); // Prevent MongoDB injection
 
 // Body parser middleware
