@@ -149,7 +149,7 @@ app.set('trust proxy', 1);
 ======================= */
 const allowedOrigins = [
   'http://localhost:3000',
-  process.env.CLIENT_URL, // your Vercel URL EXACT
+  'https://customauth.vercel.app/', // your Vercel URL EXACT
 ].filter(Boolean);
 
 app.use(cors({
