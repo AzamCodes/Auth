@@ -26,19 +26,49 @@ const app = express();
 // Connect to database
 connectDB();
 
+console.log('check frontend url', process.env.CLIENT_URL)
+
 // Trust proxy (for production behind reverse proxy)
+// Trust proxy (necessary for Railway/Vercel)
 app.set('trust proxy', 1);
 
-console.log('Check cors',process.env.CLIENT_URL);
-
 // Security middleware
-app.use(helmet());
 app.use(
-    cors({
-        origin: process.env.CLIENT_URL || 'http://localhost:3000',
-        credentials: true,
+    helmet({
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+        crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
     })
 );
+
+// CORS configuration
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+// Strip trailing slash if present for comparison
+const allowedOrigin = clientUrl.endsWith('/') ? clientUrl.slice(0, -1) : clientUrl;
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            // Allow requests with no origin (like mobile apps or curl requests)
+            if (!origin) return callback(null, true);
+
+            // Check if origin matches allowed origin (ignoring trailing slash)
+            const originClean = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+
+            if (originClean === allowedOrigin) {
+                callback(null, true);
+            } else {
+                // For development, you might want to log this
+                console.log('Blocked by CORS:', origin);
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    })
+);
+// Explicitly handle OPTIONS for preflight resilience
+app.options('*', cors());
 app.use(mongoSanitize()); // Prevent MongoDB injection
 
 // Body parser middleware
@@ -113,145 +143,3 @@ process.on('uncaughtException', (err) => {
 });
 
 module.exports = app;
-
-
-// require('dotenv').config();
-
-// const express = require('express');
-// const cors = require('cors');
-// const helmet = require('helmet');
-// const mongoSanitize = require('express-mongo-sanitize');
-// const cookieParser = require('cookie-parser');
-// const useragent = require('express-useragent');
-// const path = require('path');
-
-// const connectDB = require('./config/database');
-// const logger = require('./config/logger');
-// const { notFound, errorHandler } = require('./middleware/errorHandler');
-// const { generalLimiter } = require('./middleware/rateLimiter');
-
-// const authRoutes = require('./routes/authRoutes');
-// const userRoutes = require('./routes/userRoutes');
-// const adminRoutes = require('./routes/adminRoutes');
-
-// const app = express();
-
-// /* =======================
-//    DATABASE
-// ======================= */
-// connectDB();
-
-// /* =======================
-//    TRUST PROXY (REQUIRED)
-// ======================= */
-// app.set('trust proxy', 1);
-
-// /* =======================
-//    CORS — DONE CORRECTLY
-// ======================= */
-// const allowedOrigins = [
-//   'http://localhost:3000',
-//   'https://customauth.vercel.app/', // your Vercel URL EXACT
-// ].filter(Boolean);
-
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin) return callback(null, true);
-//     if (allowedOrigins.includes(origin)) {
-//       return callback(null, true);
-//     }
-//     return callback(new Error(`CORS blocked: ${origin}`));
-//   },
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-// }));
-
-// app.options('*', cors());
-
-// /* =======================
-//    SECURITY
-// ======================= */
-// app.use(helmet());
-// app.use(mongoSanitize());
-
-// /* =======================
-//    BODY PARSERS
-// ======================= */
-// app.use(express.json({ limit: '10mb' }));
-// app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// /* =======================
-//    COOKIES + UA
-// ======================= */
-// app.use(cookieParser());
-// app.use(useragent.express());
-
-// /* =======================
-//    PASSPORT
-// ======================= */
-// const passport = require('./config/passport');
-// app.use(passport.initialize());
-
-// /* =======================
-//    RATE LIMIT
-// ======================= */
-// app.use('/api', generalLimiter);
-
-// /* =======================
-//    STATIC FILES
-// ======================= */
-// app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-// /* =======================
-//    DEBUG ORIGIN (REMOVE LATER)
-// ======================= */
-// app.use((req, res, next) => {
-//   console.log('ORIGIN:', req.headers.origin);
-//   next();
-// });
-
-// /* =======================
-//    ROUTES
-// ======================= */
-// app.get('/health', (req, res) => {
-//   res.json({ success: true, status: 'OK' });
-// });
-
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// app.use('/api/admin', adminRoutes);
-
-// app.get('/', (req, res) => {
-//   res.json({ message: 'API running' });
-// });
-
-// /* =======================
-//    ERRORS
-// ======================= */
-// app.use(notFound);
-// app.use(errorHandler);
-
-// /* =======================
-//    SERVER
-// ======================= */
-// const PORT = process.env.PORT || 5000;
-
-// const server = app.listen(PORT, () => {
-//   logger.info(`Server running on port ${PORT}`);
-// });
-
-// /* =======================
-//    PROCESS SAFETY
-// ======================= */
-// process.on('unhandledRejection', err => {
-//   logger.error(err);
-//   server.close(() => process.exit(1));
-// });
-
-// process.on('uncaughtException', err => {
-//   logger.error(err);
-//   process.exit(1);
-// });
-
-// module.exports = app;
-
