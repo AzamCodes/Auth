@@ -100,6 +100,9 @@ router.post(
 router.post('/logout', optionalAuthenticate, authController.logout);
 router.post('/logout-all', authenticate, authController.logoutAll);
 
+// Helper to get primary client URL
+const getClientUrl = () => (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
+
 // Google OAuth routes
 router.get(
     '/google',
@@ -111,7 +114,7 @@ router.get(
 router.get(
     '/google/callback',
     require('passport').authenticate('google', {
-        failureRedirect: (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim(),
+        failureRedirect: getClientUrl(),
         session: false,
     }),
     authController.googleCallback
@@ -128,7 +131,7 @@ router.get(
 router.get(
     '/github/callback',
     require('passport').authenticate('github', {
-        failureRedirect: (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim(),
+        failureRedirect: getClientUrl(),
         session: false,
     }),
     authController.githubCallback
