@@ -4,8 +4,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Mail, ArrowLeft, Loader2 } from 'lucide-react';
 import { passwordResetRequestSchema } from '../utils/validationSchemas';
-import { toast } from 'react-toastify';
-import axios from 'axios';
+import useAuth from '../hooks/useAuth';
 
 import { Button } from "@/components/ui/button"
 import {
@@ -22,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const ForgotPasswordPage = () => {
     const navigate = useNavigate();
+    const { requestPasswordReset } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [error, setError] = useState('');
@@ -38,18 +38,17 @@ const ForgotPasswordPage = () => {
         setIsLoading(true);
         setError('');
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-            await axios.post(`${apiUrl}/auth/request-password-reset`, data);
+            await requestPasswordReset(data.email);
             setIsSuccess(true);
-            toast.success('Password reset code sent to your email');
+            // toast is handled in useAuth
 
             // Navigate to reset password page after short delay
             setTimeout(() => {
                 navigate('/reset-password', { state: { email: data.email } });
             }, 1500);
         } catch (err) {
+            // Error handling is partly done in useAuth (toast), but we set local error state too
             setError(err.response?.data?.message || 'Failed to send reset code');
-            toast.error(err.response?.data?.message || 'Failed to send reset code');
         } finally {
             setIsLoading(false);
         }
