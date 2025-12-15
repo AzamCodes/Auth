@@ -37,9 +37,14 @@ console.log('check frontend url', process.env.CLIENT_URL)
 
 // Trust proxy (for production behind reverse proxy)
 // Trust proxy (necessary for Railway/Vercel)
+// Trust proxy (necessary for Railway/Vercel)
 app.set('trust proxy', 1);
 
-// Security middleware
+// CORS configuration
+const clientUrls = (process.env.CLIENT_URL || 'http://localhost:3000').split(',').map(url => url.trim());
+console.log('Allowed Origins:', clientUrls);
+
+const allowedOrigins = clientUrls.map(url => url.endsWith('/') ? url.slice(0, -1) : url);
 app.use(
     helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -54,13 +59,6 @@ app.use(
         },
     })
 );
-
-// CORS configuration
-// CORS configuration
-const clientUrls = (process.env.CLIENT_URL || 'http://localhost:3000').split(',').map(url => url.trim());
-console.log('Allowed Origins:', clientUrls);
-
-const allowedOrigins = clientUrls.map(url => url.endsWith('/') ? url.slice(0, -1) : url);
 
 app.use(
     cors({
