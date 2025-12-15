@@ -294,10 +294,78 @@ const googleCallback = asyncHandler(async (req, res) => {
     */
 
     // Redirect to frontend with tokens
+    // Redirect to frontend with tokens
     const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
-    const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
 
-    res.redirect(redirectURL);
+    // Professional "Step-Stone" Redirect
+    // Instead of res.redirect() which can cause "Header Overflow" (502) due to long URLs/Cookies,
+    // we send a lightweight HTML page that client-side redirects to the frontend.
+    // This is how major auth providers handle handoffs safely.
+
+    const redirectUrl = `${frontendURL}/auth/callback?token=${result.accessToken}`;
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Authenticating...</title>
+        <style>
+            body { 
+                background-color: #f4f6f9; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                margin: 0; 
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }
+            .loader {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #667eea;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            p {
+                margin-top: 20px;
+                color: #555;
+                font-size: 14px;
+            }
+            .container {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="loader"></div>
+            <p>Securely redirecting to dashboard...</p>
+        </div>
+        <script>
+            // Store user data in localStorage if needed, or better yet, fetch it on the frontend
+            // using the token to keep the URL short.
+            const user = ${JSON.stringify(result.user)};
+            try {
+                localStorage.setItem('user', JSON.stringify(user));
+            } catch (e) {
+                console.error('Storage access denied');
+            }
+
+            // Redirect immediately
+            window.location.href = "${redirectUrl}&user=" + encodeURIComponent(JSON.stringify(user));
+        </script>
+    </body>
+    </html>
+    `;
+
+    res.send(html);
 });
 
 /**
@@ -317,7 +385,6 @@ const githubCallback = asyncHandler(async (req, res) => {
     const result = await authService.githubOAuthLogin(req.user, deviceInfo, ipAddress);
 
     // Set refresh token in HTTP-only cookie
-    // Set refresh token in HTTP-only cookie
     // Note: Cookies disabled on redirect to prevent 502 Header Overflow
     /*
     if (result.refreshToken) {
@@ -332,9 +399,68 @@ const githubCallback = asyncHandler(async (req, res) => {
 
     // Redirect to frontend with tokens
     const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
-    const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
 
-    res.redirect(redirectURL);
+    // Professional "Step-Stone" Redirect
+    const redirectUrl = `${frontendURL}/auth/callback?token=${result.accessToken}`;
+
+    const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Authenticating...</title>
+        <style>
+            body { 
+                background-color: #f4f6f9; 
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                margin: 0; 
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            }
+            .loader {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #667eea;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            p {
+                margin-top: 20px;
+                color: #555;
+                font-size: 14px;
+            }
+            .container {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="loader"></div>
+            <p>Securely redirecting to dashboard...</p>
+        </div>
+        <script>
+            const user = ${JSON.stringify(result.user)};
+            try {
+                // Pre-seed user data to avoid long URL
+                localStorage.setItem('user', JSON.stringify(user));
+            } catch (e) {}
+
+            window.location.href = "${redirectUrl}&user=" + encodeURIComponent(JSON.stringify(user));
+        </script>
+    </body>
+    </html>
+    `;
+
+    res.send(html);
 });
 
 module.exports = {

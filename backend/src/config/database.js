@@ -15,10 +15,7 @@ const connectDB = async () => {
         // console.log('Current working directory:', process.cwd());
         // console.log('MONGODB_URI from env:', process.env.MONGODB_URI);
         // console.log('All env keys:', Object.keys(process.env).filter(k => k.includes('MONGO')));
-        const conn = await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        const conn = await mongoose.connect(process.env.MONGODB_URI);
 
         logger.info(`MongoDB Connected: ${conn.connection.host}`);
 
