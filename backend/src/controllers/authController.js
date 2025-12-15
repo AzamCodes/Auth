@@ -298,6 +298,7 @@ const googleCallback = asyncHandler(async (req, res) => {
     // we send a lightweight HTML page that client-side redirects to the frontend.
     // This is how major auth providers handle handoffs safely.
 
+    // We only pass the token. The frontend will fetch the user profile.
     const redirectUrl = `${frontendURL}/auth/callback?token=${result.accessToken}`;
 
     const html = `
@@ -345,17 +346,8 @@ const googleCallback = asyncHandler(async (req, res) => {
             <p>Securely redirecting to dashboard...</p>
         </div>
         <script>
-            // Store user data in localStorage if needed, or better yet, fetch it on the frontend
-            // using the token to keep the URL short.
-            const user = ${JSON.stringify(result.user)};
-            try {
-                localStorage.setItem('user', JSON.stringify(user));
-            } catch (e) {
-                console.error('Storage access denied');
-            }
-
             // Redirect immediately
-            window.location.href = "${redirectUrl}&user=" + encodeURIComponent(JSON.stringify(user));
+            window.location.href = "${redirectUrl}";
         </script>
     </body>
     </html>
@@ -441,13 +433,7 @@ const githubCallback = asyncHandler(async (req, res) => {
             <p>Securely redirecting to dashboard...</p>
         </div>
         <script>
-            const user = ${JSON.stringify(result.user)};
-            try {
-                // Pre-seed user data to avoid long URL
-                localStorage.setItem('user', JSON.stringify(user));
-            } catch (e) {}
-
-            window.location.href = "${redirectUrl}&user=" + encodeURIComponent(JSON.stringify(user));
+            window.location.href = "${redirectUrl}";
         </script>
     </body>
     </html>

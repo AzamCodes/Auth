@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setAuth } from '../redux/authSlice';
 import { Loader2 } from 'lucide-react';
+import userService from '../services/userService';
 
 const OAuthCallbackPage = () => {
     const navigate = useNavigate();
@@ -11,25 +12,38 @@ const OAuthCallbackPage = () => {
 
     useEffect(() => {
         const token = searchParams.get('token');
-        const userParam = searchParams.get('user');
+        // We no longer read 'user' from URL to prevent URI_TOO_LONG errors
 
-        if (token && userParam) {
-            try {
-                const user = JSON.parse(userParam);
+        if (token) {
+            const completeLogin = async () => {
+                try {
+                    // 1. Store token temporarily
+                    localStorage.setItem('accessToken', token);
 
-                // Store token and user in Redux
-                dispatch(setAuth({ token, user }));
+                    // 2. Fetch User Profile
+                    const response = await userService.getProfile();
 
-                // Store token in localStorage
-                localStorage.setItem('accessToken', token);
-                localStorage.setItem('user', JSON.stringify(user));
+                    if (response && response.user) {
+                        const user = response.user;
 
-                // Redirect to dashboard
-                navigate('/dashboard');
-            } catch (error) {
-                console.error('OAuth callback error:', error);
-                navigate('/login');
-            }
+                        // 3. Update Redux & LocalStorage
+                        dispatch(setAuth({ token, user }));
+                        localStorage.setItem('user', JSON.stringify(user));
+
+                        // 4. Redirect to dashboard
+                        navigate('/dashboard');
+                    } else {
+                        throw new Error('Failed to load user profile');
+                    }
+                } catch (error) {
+                    console.error('OAuth callback error:', error);
+                    // Clear invalid data
+                    localStorage.removeItem('accessToken');
+                    navigate('/login');
+                }
+            };
+
+            completeLogin();
         } else {
             // No token, redirect to login
             navigate('/login');
