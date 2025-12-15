@@ -23,8 +23,15 @@ const adminRoutes = require('./routes/adminRoutes');
 // Initialize express app
 const app = express();
 
+
 // Connect to database
 connectDB();
+
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} - IP: ${req.ip}`);
+    next();
+});
 
 console.log('check frontend url', process.env.CLIENT_URL)
 
@@ -41,9 +48,11 @@ app.use(
 );
 
 // CORS configuration
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
-// Strip trailing slash if present for comparison
-const allowedOrigin = clientUrl.endsWith('/') ? clientUrl.slice(0, -1) : clientUrl;
+// CORS configuration
+const clientUrls = (process.env.CLIENT_URL || 'http://localhost:3000').split(',').map(url => url.trim());
+console.log('Allowed Origins:', clientUrls);
+
+const allowedOrigins = clientUrls.map(url => url.endsWith('/') ? url.slice(0, -1) : url);
 
 app.use(
     cors({
@@ -54,11 +63,10 @@ app.use(
             // Check if origin matches allowed origin (ignoring trailing slash)
             const originClean = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
-            if (originClean === allowedOrigin) {
+            if (allowedOrigins.includes(originClean)) {
                 callback(null, true);
             } else {
-                // For development, you might want to log this
-                console.log('Blocked by CORS:', origin);
+                console.warn(`Blocked by CORS: ${origin}`);
                 callback(new Error('Not allowed by CORS'));
             }
         },

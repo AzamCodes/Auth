@@ -13,7 +13,7 @@ const skipOptions = (req) => req.method === 'OPTIONS';
  */
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 500, // Limit each IP to 500 requests per windowMs
     message: {
         success: false,
         message: 'Too many requests from this IP, please try again later.',
@@ -21,6 +21,10 @@ const generalLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     skip: skipOptions, // Do not count OPTIONS requests
+    handler: (req, res, next, options) => {
+        console.warn(`Rate Limit Exceeded: IP=${req.ip}, URL=${req.originalUrl}`);
+        res.status(options.statusCode).json(options.message);
+    },
 });
 
 /**

@@ -111,7 +111,7 @@ router.get(
 router.get(
     '/google/callback',
     require('passport').authenticate('google', {
-        failureRedirect: process.env.CLIENT_URL || 'http://localhost:3000',
+        failureRedirect: (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim(),
         session: false,
     }),
     authController.googleCallback
@@ -128,7 +128,7 @@ router.get(
 router.get(
     '/github/callback',
     require('passport').authenticate('github', {
-        failureRedirect: process.env.CLIENT_URL || 'http://localhost:3000',
+        failureRedirect: (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim(),
         session: false,
     }),
     authController.githubCallback

@@ -290,7 +290,7 @@ const googleCallback = asyncHandler(async (req, res) => {
     }
 
     // Redirect to frontend with tokens
-    const frontendURL = process.env.CLIENT_URL || 'http://localhost:3000';
+    const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
     const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
 
     res.redirect(redirectURL);
@@ -323,7 +323,7 @@ const githubCallback = asyncHandler(async (req, res) => {
     }
 
     // Redirect to frontend with tokens
-    const frontendURL = process.env.CLIENT_URL || 'http://localhost:3000';
+    const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
     const redirectURL = `${frontendURL}/auth/callback?token=${result.accessToken}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
 
     res.redirect(redirectURL);
