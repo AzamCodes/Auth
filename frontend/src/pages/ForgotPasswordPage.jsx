@@ -64,7 +64,7 @@ const ForgotPasswordPage = () => {
                     </div>
                     <CardTitle className="text-2xl font-bold">Forgot Password?</CardTitle>
                     <CardDescription>
-                        Enter your email address and we'll send you a link to reset your password.
+                        Enter your email address and we'll send you an OTP to reset your password.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -72,7 +72,7 @@ const ForgotPasswordPage = () => {
                         <Alert className="bg-green-50 text-green-900 border-green-200">
                             <AlertTitle className="text-green-800">Check your email</AlertTitle>
                             <AlertDescription>
-                                We have sent a password reset link to your email address.
+                                We have sent a password reset OTP to your email address.
                             </AlertDescription>
                         </Alert>
                     ) : (
@@ -108,10 +108,10 @@ const ForgotPasswordPage = () => {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Sending Link...
+                                        Sending OTP...
                                     </>
                                 ) : (
-                                    'Send Reset Link'
+                                    'Send Reset OTP'
                                 )}
                             </Button>
                         </form>

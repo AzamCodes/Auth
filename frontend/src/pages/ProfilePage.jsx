@@ -286,9 +286,12 @@ const ProfilePage = () => {
                                         <Camera className="text-white h-8 w-8" />
                                         <Input
                                             type="file"
-                                            className="absolute inset-0 opacity-0 cursor-pointer"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                             accept="image/*"
-                                            onChange={handleImageUpload}
+                                            onChange={(e) => {
+                                                handleImageUpload(e);
+                                                e.target.value = '';
+                                            }}
                                         />
                                     </div>
                                 </div>

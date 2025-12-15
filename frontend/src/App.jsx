@@ -7,6 +7,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import store from './redux/store';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import PublicRoute from './components/PublicRoute';
+
 // Pages
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -30,9 +32,24 @@ const AppContent = () => {
     return (
         <Router>
             <Routes>
-                {/* Public Routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
+                {/* Public Routes - redirect to dashboard if logged in */}
+                <Route
+                    path="/login"
+                    element={
+                        <PublicRoute>
+                            <LoginPage />
+                        </PublicRoute>
+                    }
+                />
+                <Route
+                    path="/register"
+                    element={
+                        <PublicRoute>
+                            <RegisterPage />
+                        </PublicRoute>
+                    }
+                />
+
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -65,7 +82,14 @@ const AppContent = () => {
                 />
 
                 {/* Default Route */}
-                <Route path="/" element={<LoginPage />} />
+                <Route
+                    path="/"
+                    element={
+                        <PublicRoute>
+                            <LoginPage />
+                        </PublicRoute>
+                    }
+                />
             </Routes>
 
             <ToastContainer
