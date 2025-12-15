@@ -299,7 +299,9 @@ const googleCallback = asyncHandler(async (req, res) => {
     // This is how major auth providers handle handoffs safely.
 
     // We only pass the token. The frontend will fetch the user profile.
-    const redirectUrl = `${frontendURL}/auth/callback?token=${result.accessToken}`;
+    // Ensure we don't double-slash or malform the URL
+    const baseUrl = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim().replace(/\/$/, '');
+    const redirectUrl = `${baseUrl}/auth/callback?token=${result.accessToken}`;
 
     const html = `
     <!DOCTYPE html>
@@ -385,8 +387,9 @@ const githubCallback = asyncHandler(async (req, res) => {
     // Redirect to frontend with tokens
     const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
 
-    // Professional "Step-Stone" Redirect
-    const redirectUrl = `${frontendURL}/auth/callback?token=${result.accessToken}`;
+    // We only pass the token. The frontend will fetch the user profile.
+    const baseUrl = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim().replace(/\/$/, '');
+    const redirectUrl = `${baseUrl}/auth/callback?token=${result.accessToken}`;
 
     const html = `
     <!DOCTYPE html>
