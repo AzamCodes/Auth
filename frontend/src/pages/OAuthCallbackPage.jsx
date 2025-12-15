@@ -15,13 +15,13 @@ const OAuthCallbackPage = () => {
 
         if (token && userParam) {
             try {
-                const user = JSON.parse(decodeURIComponent(userParam));
+                const user = JSON.parse(userParam);
 
                 // Store token and user in Redux
                 dispatch(setAuth({ token, user }));
 
                 // Store token in localStorage
-                localStorage.setItem('token', token);
+                localStorage.setItem('accessToken', token);
                 localStorage.setItem('user', JSON.stringify(user));
 
                 // Redirect to dashboard
