@@ -44,6 +44,14 @@ app.use(
     helmet({
         crossOriginResourcePolicy: { policy: 'cross-origin' },
         crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'"],
+                connectSrc: ["'self'", ...clientUrls],
+                imgSrc: ["'self'", "data:", "https:"],
+            },
+        },
     })
 );
 

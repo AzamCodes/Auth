@@ -281,8 +281,6 @@ const googleCallback = asyncHandler(async (req, res) => {
 
     // Set refresh token in HTTP-only cookie
     // Set refresh token in HTTP-only cookie
-    // Note: Cookies disabled on redirect to prevent 502 Header Overflow
-    /*
     if (result.refreshToken) {
         res.cookie('refreshToken', result.refreshToken, {
             httpOnly: true,
@@ -291,9 +289,7 @@ const googleCallback = asyncHandler(async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
     }
-    */
 
-    // Redirect to frontend with tokens
     // Redirect to frontend with tokens
     const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
 
@@ -385,8 +381,6 @@ const githubCallback = asyncHandler(async (req, res) => {
     const result = await authService.githubOAuthLogin(req.user, deviceInfo, ipAddress);
 
     // Set refresh token in HTTP-only cookie
-    // Note: Cookies disabled on redirect to prevent 502 Header Overflow
-    /*
     if (result.refreshToken) {
         res.cookie('refreshToken', result.refreshToken, {
             httpOnly: true,
@@ -395,7 +389,6 @@ const githubCallback = asyncHandler(async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
     }
-    */
 
     // Redirect to frontend with tokens
     const frontendURL = (process.env.CLIENT_URL || 'http://localhost:3000').split(',')[0].trim();
